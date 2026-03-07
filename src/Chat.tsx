@@ -258,7 +258,11 @@ export default function Chat({ groupId, goBack }: any) {
       </div>
 
       {/* AI Assistant */}
-      <Densel text={denselText} />
+      <Densel
+        text={denselText}
+        messages={messages}
+        isTyping={text.length > 0}
+      />
 
     </div>
   );
