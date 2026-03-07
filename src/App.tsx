@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 import "./App.css";
 import Chat from "./Chat";
+import Auth from "./Auth";
 import { startSummarizer } from "./summarizerRunner";
 
 type Kard = {
@@ -15,13 +16,32 @@ function App() {
   const [kards, setKards] = useState<Kard[]>([]);
   const [selectedKard, setSelectedKard] = useState<Kard | null>(null);
   const [chatGroup, setChatGroup] = useState<number | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
 
-  // Initial setup
+  // Check if user already logged in
   useEffect(() => {
+
+    async function checkSession() {
+
+      const { data } = await supabase.auth.getSession();
+
+      if (data.session) {
+        setLoggedIn(true);
+      }
+
+    }
+
+    checkSession();
+
+  }, []);
+
+  // Initial setup after login
+  useEffect(() => {
+
+    if (!loggedIn) return;
 
     async function init() {
 
-      // test database connection
       const { data, error } = await supabase
         .from("messages")
         .select("*")
@@ -29,7 +49,6 @@ function App() {
 
       console.log("Supabase test:", data, error);
 
-      // load kard summaries
       const { data: kardData, error: kardError } = await supabase
         .from("kard_summaries")
         .select("*")
@@ -45,13 +64,14 @@ function App() {
 
     init();
 
-    // start AI summarizer loop
     startSummarizer();
 
-  }, []);
+  }, [loggedIn]);
 
-  // Realtime updates for kard summaries
+  // Realtime kard summary updates
   useEffect(() => {
+
+    if (!loggedIn) return;
 
     const channel = supabase
       .channel("kard_updates")
@@ -80,7 +100,7 @@ function App() {
       supabase.removeChannel(channel);
     };
 
-  }, []);
+  }, [loggedIn]);
 
   const openKard = (kard: Kard) => {
     setSelectedKard(kard);
@@ -95,6 +115,11 @@ function App() {
       setChatGroup(selectedKard.group_id);
     }
   };
+
+  // Show login page if not logged in
+  if (!loggedIn) {
+    return <Auth onLogin={() => setLoggedIn(true)} />;
+  }
 
   // Chat screen
   if (chatGroup) {

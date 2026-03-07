@@ -16,13 +16,8 @@ export default function Chat({ groupId, goBack }: any) {
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  const userId =
-    localStorage.getItem("kards_user") ||
-    "user_" + Math.random().toString(36).substring(2, 8);
-
-  useEffect(() => {
-    localStorage.setItem("kards_user", userId);
-  }, []);
+  // Get username created during signup/login
+  const username = localStorage.getItem("kards_username") || "anonymous";
 
   // Load existing messages
   useEffect(() => {
@@ -41,7 +36,7 @@ export default function Chat({ groupId, goBack }: any) {
 
     loadMessages();
 
-  }, []);
+  }, [groupId]);
 
   // Realtime messages
   useEffect(() => {
@@ -71,9 +66,9 @@ export default function Chat({ groupId, goBack }: any) {
       supabase.removeChannel(channel);
     };
 
-  }, []);
+  }, [groupId]);
 
-  // Auto scroll
+  // Auto scroll to latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -85,7 +80,7 @@ export default function Chat({ groupId, goBack }: any) {
     await supabase.from("messages").insert({
       group_id: groupId,
       content: text,
-      user_id: userId
+      user_id: username
     });
 
     setText("");
@@ -104,7 +99,7 @@ export default function Chat({ groupId, goBack }: any) {
 
         {messages.map((m) => {
 
-          const isMe = m.user_id === userId;
+          const isMe = m.user_id === username;
 
           return (
             <div
@@ -112,10 +107,13 @@ export default function Chat({ groupId, goBack }: any) {
               className={`message ${isMe ? "me" : "other"}`}
             >
               <div className="bubble">
+
                 {!isMe && (
                   <div className="user">{m.user_id}</div>
                 )}
+
                 {m.content}
+
               </div>
             </div>
           );
