@@ -1,13 +1,17 @@
-import { summarizeGroup } from "./aiSummarizer";
+import { runSummarizer } from "./aiSummarizer";
 
 export function startSummarizer() {
 
+  console.log("Starting AI summarizer...");
+
+  // run immediately
+  runSummarizer();
+
+  // run every 20 seconds
   setInterval(() => {
 
-    summarizeGroup(1);
-    summarizeGroup(2);
-    summarizeGroup(3);
+    runSummarizer();
 
-  }, 300000); // every 5 minutes
+  }, 20000);
 
 }

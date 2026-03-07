@@ -3,28 +3,92 @@ const MODEL = "openai/gpt-4o-mini";
 
 /*
 ========================
+CLEAN MESSAGES
+========================
+Removes spam and duplicates
+*/
+
+function preprocessMessages(messages: string[]) {
+
+  const cleaned: string[] = [];
+
+  const seen = new Set();
+
+  messages.forEach(msg => {
+
+    const trimmed = msg.trim();
+
+    if (!trimmed) return;
+
+    const lower = trimmed.toLowerCase();
+
+    if (seen.has(lower)) return;
+
+    seen.add(lower);
+
+    cleaned.push(trimmed);
+
+  });
+
+  return cleaned.slice(-50);
+
+}
+
+
+/*
+========================
 SUMMARIZE CONVERSATION
 ========================
-Used for kard summaries
+Produces clear explanation of discussion
 */
 
 export async function summarizeConversation(messages: string[]) {
 
-  const joined = messages.slice(-20).join("\n");
+  const cleanedMessages = preprocessMessages(messages);
+
+  const joined = cleanedMessages.join("\n");
 
   const prompt = `
-You are Densel, an AI assistant that observes group chats.
+You are Densel, an AI that summarizes group conversations.
 
-Here are recent messages from a group conversation:
+Below are raw chat messages from a group conversation:
 
 ${joined}
 
-Briefly explain what people are talking about.
+Your task:
+Understand the overall topic and produce a **very short summary of the discussion**.
 
 Rules:
-- Maximum 2 sentences
-- Neutral tone
-- No emojis
+• Do NOT repeat or paraphrase messages
+• Ignore spam or repeated phrases
+• Focus only on the main topic
+• Write like a conversation headline
+
+Output format:
+• ONE short sentence
+• Maximum 10–12 words
+• No emojis
+• Neutral tone
+
+Examples:
+
+Messages:
+"He fell from his scooter"
+"Bro Densel had an accident"
+"Is he okay?"
+"I heard he broke his arm"
+
+Good output:
+Discussion about Densel having a scooter accident.
+
+Messages:
+"AI will take jobs"
+"Bro automation already happening"
+"Developers safe?"
+"I think AI will replace some jobs"
+
+Good output:
+Debate about AI replacing jobs and automation.
 `;
 
   try {
@@ -40,32 +104,35 @@ Rules:
         messages: [
           {
             role: "system",
-            content: "You are Densel, an AI that summarizes conversations."
+            content: "You summarize conversations into short headline-style summaries."
           },
           {
             role: "user",
             content: prompt
           }
         ],
-        temperature: 0.3
+        temperature: 0.2
       }),
     });
 
     const data = await res.json();
 
-    if (!data?.choices?.[0]?.message?.content) {
-      return "Conversation summary unavailable.";
+    const content = data?.choices?.[0]?.message?.content;
+
+    if (!content) {
+      return "Conversation topic unclear.";
     }
 
-    return data.choices[0].message.content;
+    return content.trim();
 
   } catch (error) {
 
     console.error("AI summary error:", error);
 
-    return "Densel couldn't summarize the conversation.";
+    return "Conversation topic unclear.";
 
   }
+
 }
 
 
@@ -73,25 +140,34 @@ Rules:
 ========================
 JOIN SUGGESTION
 ========================
-Used for Densel chatbot
+Helps user enter conversation
 */
 
 export async function joinSuggestion(messages: string[]) {
 
-  const joined = messages.slice(-15).join("\n");
+  const cleanedMessages = preprocessMessages(messages);
+
+  const joined = cleanedMessages.slice(-25).join("\n");
 
   const prompt = `
-You are Densel, a friendly AI that helps users join conversations.
+You are Densel, an AI assistant helping users join conversations.
 
 Recent messages:
 
 ${joined}
 
-Explain briefly what the conversation is about and suggest ONE message the user could send to join.
+First understand what the conversation is about.
+
+Then produce:
+
+1) A short explanation of the discussion
+2) ONE natural message the user could send
 
 Rules:
-- Casual tone
-- Maximum 3 sentences
+• Casual tone
+• Maximum 3 sentences
+• Suggested message must feel natural
+• Do not repeat the messages
 `;
 
   try {
@@ -107,7 +183,7 @@ Rules:
         messages: [
           {
             role: "system",
-            content: "You are Densel, an AI that helps users join conversations."
+            content: "You help users understand and join conversations."
           },
           {
             role: "user",
@@ -120,11 +196,13 @@ Rules:
 
     const data = await res.json();
 
-    if (!data?.choices?.[0]?.message?.content) {
+    const content = data?.choices?.[0]?.message?.content;
+
+    if (!content) {
       return "I couldn't understand the conversation yet.";
     }
 
-    return data.choices[0].message.content;
+    return content.trim();
 
   } catch (error) {
 
@@ -133,4 +211,5 @@ Rules:
     return "Hi, I'm Densel. I'm still figuring out the conversation.";
 
   }
+
 }
