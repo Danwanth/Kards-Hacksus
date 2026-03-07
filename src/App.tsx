@@ -18,7 +18,12 @@ function App() {
   const [chatGroup, setChatGroup] = useState<number | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
 
-  // Check if user already logged in
+  /*
+  ==========================
+  CHECK LOGIN
+  ==========================
+  */
+
   useEffect(() => {
 
     async function checkSession() {
@@ -35,30 +40,38 @@ function App() {
 
   }, []);
 
-  // Initial setup after login
+  /*
+  ==========================
+  LOAD KARDS
+  ==========================
+  */
+
   useEffect(() => {
 
     if (!loggedIn) return;
 
     async function init() {
 
-      const { data, error } = await supabase
-        .from("messages")
-        .select("*")
-        .limit(1);
-
-      console.log("Supabase test:", data, error);
-
-      const { data: kardData, error: kardError } = await supabase
+      const { data: kardData, error } = await supabase
         .from("kard_summaries")
         .select("*")
         .order("group_id", { ascending: true });
 
-      console.log("Loaded kard summaries:", kardData, kardError);
+      console.log("Loaded kard summaries:", kardData, error);
 
-      if (kardData) {
-        setKards(kardData);
-      }
+      if (!kardData) return;
+
+      // Remove duplicates by group_id
+      const unique: Record<number, Kard> = {};
+
+      kardData.forEach((k: Kard) => {
+        unique[k.group_id] = k;
+      });
+
+      const uniqueKards = Object.values(unique);
+
+      // Limit to 3 kards
+      setKards(uniqueKards.slice(0, 3));
 
     }
 
@@ -68,7 +81,12 @@ function App() {
 
   }, [loggedIn]);
 
-  // Realtime kard summary updates
+  /*
+  ==========================
+  REALTIME SUMMARY UPDATES
+  ==========================
+  */
+
   useEffect(() => {
 
     if (!loggedIn) return;
@@ -78,7 +96,7 @@ function App() {
       .on(
         "postgres_changes",
         {
-          event: "UPDATE",
+          event: "*",
           schema: "public",
           table: "kard_summaries"
         },
@@ -86,11 +104,15 @@ function App() {
 
           const updated = payload.new as Kard;
 
-          setKards((prev) =>
-            prev.map((k) =>
-              k.id === updated.id ? updated : k
-            )
-          );
+          setKards((prev) => {
+
+            const filtered = prev.filter(
+              (k) => k.group_id !== updated.group_id
+            );
+
+            return [...filtered, updated].slice(0, 3);
+
+          });
 
         }
       )
@@ -101,6 +123,12 @@ function App() {
     };
 
   }, [loggedIn]);
+
+  /*
+  ==========================
+  NAVIGATION
+  ==========================
+  */
 
   const openKard = (kard: Kard) => {
     setSelectedKard(kard);
@@ -116,12 +144,22 @@ function App() {
     }
   };
 
-  // Show login page if not logged in
+  /*
+  ==========================
+  LOGIN SCREEN
+  ==========================
+  */
+
   if (!loggedIn) {
     return <Auth onLogin={() => setLoggedIn(true)} />;
   }
 
-  // Chat screen
+  /*
+  ==========================
+  CHAT SCREEN
+  ==========================
+  */
+
   if (chatGroup) {
     return (
       <Chat
@@ -133,6 +171,12 @@ function App() {
       />
     );
   }
+
+  /*
+  ==========================
+  KARD SELECTION SCREEN
+  ==========================
+  */
 
   return (
     <div className="app">
@@ -148,7 +192,7 @@ function App() {
 
           {kards.map((kard, index) => (
             <div
-              key={kard.id}
+              key={kard.group_id}
               className={`kard kard-${index + 1}`}
               onClick={() => openKard(kard)}
             >
@@ -184,7 +228,5 @@ function App() {
     </div>
   );
 }
-
-
 
 export default App;

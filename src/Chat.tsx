@@ -19,6 +19,7 @@ export default function Chat({ groupId, goBack }: any) {
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const username = localStorage.getItem("kards_username") || "anonymous";
 
@@ -27,7 +28,12 @@ export default function Chat({ groupId, goBack }: any) {
     inputRef.current?.focus();
   }, []);
 
-  // Load messages
+  /*
+  ==========================
+  LOAD MESSAGES
+  ==========================
+  */
+
   useEffect(() => {
 
     async function loadMessages() {
@@ -46,7 +52,12 @@ export default function Chat({ groupId, goBack }: any) {
 
   }, [groupId]);
 
-  // Realtime messages
+  /*
+  ==========================
+  REALTIME CHAT
+  ==========================
+  */
+
   useEffect(() => {
 
     const channel = supabase
@@ -76,12 +87,22 @@ export default function Chat({ groupId, goBack }: any) {
 
   }, [groupId]);
 
-  // Auto scroll
+  /*
+  ==========================
+  AUTO SCROLL
+  ==========================
+  */
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Send message
+  /*
+  ==========================
+  SEND MESSAGE
+  ==========================
+  */
+
   async function sendMessage() {
 
     if (!text.trim()) return;
@@ -104,9 +125,9 @@ export default function Chat({ groupId, goBack }: any) {
   }
 
   /*
-  ============================
-  AUTO SUMMARY EVERY 2 MIN
-  ============================
+  ==========================
+  UPDATE SUMMARY
+  ==========================
   */
 
   async function updateSummary() {
@@ -121,27 +142,41 @@ export default function Chat({ groupId, goBack }: any) {
 
     await supabase
       .from("kard_summaries")
-      .insert({
+      .upsert({
         group_id: groupId,
         summary: summary
+      }, {
+        onConflict: "group_id"
       });
 
   }
 
+  /*
+  ==========================
+  RUN SUMMARY EVERY 2 MIN
+  ==========================
+  */
+
   useEffect(() => {
 
-    const interval = setInterval(() => {
-      updateSummary();
-    }, 120000); // 2 minutes
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
 
-    return () => clearInterval(interval);
+    intervalRef.current = setInterval(() => {
+      updateSummary();
+    }, 120000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
 
   }, [messages]);
 
   /*
-  ============================
-  DENSEL JOIN SUGGESTION
-  ============================
+  ==========================
+  DENSEL SUGGESTION
+  ==========================
   */
 
   useEffect(() => {
@@ -163,15 +198,18 @@ export default function Chat({ groupId, goBack }: any) {
 
   }, [messages]);
 
+  /*
+  ==========================
+  UI
+  ==========================
+  */
+
   return (
     <div className="chat-container">
 
       <div className="chat-header">
-
         <button onClick={goBack}>Back</button>
-
         <h2>Group Chat</h2>
-
       </div>
 
       <div className="messages">
@@ -219,7 +257,7 @@ export default function Chat({ groupId, goBack }: any) {
 
       </div>
 
-      {/* Densel AI Assistant */}
+      {/* AI Assistant */}
       <Densel text={denselText} />
 
     </div>
