@@ -34,6 +34,14 @@ export default function Densel({ text, messages, isTyping }: any){
   LOOK AT INPUT WHEN TYPING
   ==========================
   */
+ /*{/* LIGHTBULB }
+
+      {open && (
+        <div className="densel-bulb">
+          💡
+        </div>
+      )}
+*/
 
   useEffect(()=>{
 
@@ -53,6 +61,7 @@ export default function Densel({ text, messages, isTyping }: any){
       return ()=>clearInterval(interval);
 
     }
+    
 
   },[isTyping]);
 
@@ -60,14 +69,7 @@ export default function Densel({ text, messages, isTyping }: any){
 
     <div className={`densel ${open ? "active" : "idle"}`}>
 
-      {/* LIGHTBULB */}
-
-      {open && (
-        <div className="densel-bulb">
-          💡
-        </div>
-      )}
-
+      
       {/* FACE */}
 
       <div
