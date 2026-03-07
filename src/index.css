@@ -1,8 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+:root {
+  --bg: #f7f4ef;
+  --text: #1e1c19;
+  --accent: #5b8f5e;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
 body {
-  font-family: Arial;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
   margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  background-image:
+    radial-gradient(circle, rgba(91,143,94,0.18) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
 }
 
 h1 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
   text-align: center;
+  letter-spacing: -0.02em;
+  color: var(--text);
 }
