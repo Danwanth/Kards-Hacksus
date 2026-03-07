@@ -1,0 +1,22 @@
+.densel{
+position:fixed;
+bottom:90px;
+right:20px;
+z-index:1000;
+}
+
+.densel-bubble{
+font-size:32px;
+cursor:pointer;
+background:white;
+padding:10px;
+border-radius:50%;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+
+.densel-box{
+width:220px;
+background:#eee;
+padding:16px;
+border-radius:10px;
+}

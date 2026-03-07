@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "./supabase";
 import "./Chat.css";
+import { summarizeConversation, joinSuggestion } from "./ai";
+import Densel from "./Densel";
 
 type Message = {
   id: string;
@@ -13,13 +15,19 @@ export default function Chat({ groupId, goBack }: any) {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
+  const [denselText, setDenselText] = useState("");
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Get username created during signup/login
   const username = localStorage.getItem("kards_username") || "anonymous";
 
-  // Load existing messages
+  // Autofocus input
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  // Load messages
   useEffect(() => {
 
     async function loadMessages() {
@@ -68,18 +76,19 @@ export default function Chat({ groupId, goBack }: any) {
 
   }, [groupId]);
 
-  // Auto scroll to latest message
+  // Auto scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Send message
   async function sendMessage() {
 
     if (!text.trim()) return;
 
     await supabase.from("messages").insert({
       group_id: groupId,
-      content: text,
+      content: text.trim(),
       user_id: username
     });
 
@@ -87,12 +96,82 @@ export default function Chat({ groupId, goBack }: any) {
 
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  /*
+  ============================
+  AUTO SUMMARY EVERY 2 MIN
+  ============================
+  */
+
+  async function updateSummary() {
+
+    if (messages.length < 3) return;
+
+    const texts = messages
+      .slice(-20)
+      .map(m => `${m.user_id}: ${m.content}`);
+
+    const summary = await summarizeConversation(texts);
+
+    await supabase
+      .from("kard_summaries")
+      .insert({
+        group_id: groupId,
+        summary: summary
+      });
+
+  }
+
+  useEffect(() => {
+
+    const interval = setInterval(() => {
+      updateSummary();
+    }, 120000); // 2 minutes
+
+    return () => clearInterval(interval);
+
+  }, [messages]);
+
+  /*
+  ============================
+  DENSEL JOIN SUGGESTION
+  ============================
+  */
+
+  useEffect(() => {
+
+    async function generateSuggestion() {
+
+      if (messages.length < 3) return;
+
+      const texts = messages
+        .slice(-15)
+        .map(m => `${m.user_id}: ${m.content}`);
+
+      const suggestion = await joinSuggestion(texts);
+
+      setDenselText(suggestion);
+    }
+
+    generateSuggestion();
+
+  }, [messages]);
+
   return (
     <div className="chat-container">
 
       <div className="chat-header">
+
         <button onClick={goBack}>Back</button>
+
         <h2>Group Chat</h2>
+
       </div>
 
       <div className="messages">
@@ -127,16 +206,21 @@ export default function Chat({ groupId, goBack }: any) {
       <div className="chat-input">
 
         <input
+          ref={inputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Type message..."
         />
 
         <button onClick={sendMessage}>
-          Send
+          ➤
         </button>
 
       </div>
+
+      {/* Densel AI Assistant */}
+      <Densel text={denselText} />
 
     </div>
   );
