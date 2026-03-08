@@ -180,7 +180,10 @@ function App() {
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    // ✅ FIXED CLEANUP
+    return () => {
+      supabase.removeChannel(channel);
+    };
 
   }, [loggedIn]);
 
