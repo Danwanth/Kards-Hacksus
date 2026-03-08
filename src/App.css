@@ -402,7 +402,7 @@ font-weight:300;
 @media (max-width: 420px){
 
   .arc-scene{
-    height:460px;
+  height: min(520px, 70vh);
   }
 
   .arc-kard{
