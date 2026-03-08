@@ -1,7 +1,7 @@
 .densel{
 
 position:fixed;
-bottom:110px;
+bottom:90px;
 right:20px;
 
 display:flex;
@@ -13,7 +13,7 @@ z-index:1000;
 
 }
 
-/* LIGHT BULB */
+/* LIGHT BULB 
 
 .densel-bulb{
 
@@ -36,7 +36,7 @@ opacity:1;
 }
 
 }
-
+*/
 /* FACE */
 
 .densel-face{
@@ -170,5 +170,22 @@ margin-bottom:6px;
 font-size:13px;
 line-height:1.5;
 color:#444;
+
+}
+@media (max-width:420px){
+
+  .densel{
+
+    bottom:80px;
+    right:14px;
+
+  }
+
+  .densel-face{
+
+    width:60px;
+    height:60px;
+
+  }
 
 }

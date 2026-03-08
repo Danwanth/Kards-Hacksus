@@ -261,6 +261,7 @@ button.primary:hover {
 }
 
 .arc-kard {
+  
   position: absolute;
   width: 152px;
   height: 120px;
@@ -272,6 +273,8 @@ button.primary:hover {
   box-shadow: var(--shadow);
   cursor: pointer;
   z-index: 2;
+
+  will-change: transform, left, top;
 
   display: flex;
   align-items: center;
@@ -391,4 +394,53 @@ color:var(--text-muted);
 
 font-weight:300;
 
+}
+/* ============================= */
+/* MOBILE OPTIMIZATION */
+/* ============================= */
+
+@media (max-width: 420px){
+
+  .arc-scene{
+    height:460px;
+  }
+
+  .arc-kard{
+    width:130px;
+    height:100px;
+    font-size:10px;
+    padding:12px;
+  }
+
+  .arc-title{
+    font-size:36px;
+  }
+
+  .arc-title-wrap{
+    width:200px;
+  }
+
+}
+
+/* Smaller phones */
+
+@media (max-width:360px){
+
+  .arc-scene{
+    height:420px;
+  }
+
+  .arc-kard{
+    width:118px;
+    height:92px;
+    font-size:9px;
+  }
+
+  .arc-title{
+    font-size:32px;
+  }
+
+}
+html, body {
+  overflow-x:hidden;
 }
