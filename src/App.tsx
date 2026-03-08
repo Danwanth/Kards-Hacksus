@@ -11,104 +11,218 @@ type Kard = {
   group_id: number;
 };
 
-// Fixed positions on the circle (top, bottom-right, bottom-left)
 const POSITIONS = [
-  { x: 50, y: 12, tilt: 0 },       // top center
-  { x: 82, y: 58, tilt: 18 },      // bottom right
-  { x: 18, y: 58, tilt: -18 },     // bottom left 
+  { x: 50, y: 12, tilt: 0 },
+  { x: 82, y: 58, tilt: 18 },
+  { x: 18, y: 58, tilt: -18 },
 ];
 
-const ROTATE_INTERVAL = 10000; // ms
+const ROTATE_INTERVAL = 10000;
 
 function App() {
+
   const [kards, setKards] = useState<Kard[]>([]);
   const [selectedKard, setSelectedKard] = useState<Kard | null>(null);
   const [chatGroup, setChatGroup] = useState<number | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
 
-  // posIndex[i] = which POSITION slot card i currently occupies
   const [posIndex, setPosIndex] = useState([0, 1, 2]);
 
-  /* ── Clockwise rotation every 5s ── */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPosIndex(prev => [
-        // each card moves to the next position clockwise
-        (prev[0] + 1) % 3,
-        (prev[1] + 1) % 3,
-        (prev[2] + 1) % 3,
-      ]);
-    }, ROTATE_INTERVAL);
-    return () => clearInterval(interval);
-  }, []);
+  const [loading, setLoading] = useState(true);
+  const [showIntro, setShowIntro] = useState(true);
 
-  /* ── Check Login ── */
+  /* LOGIN CHECK */
+
   useEffect(() => {
+
     async function checkSession() {
+
       const { data } = await supabase.auth.getSession();
-      if (data.session) setLoggedIn(true);
+
+      if (data.session) {
+        setLoggedIn(true);
+      } else {
+        setLoading(false);
+      }
+
     }
+
     checkSession();
+
   }, []);
 
-  /* ── Load Kards ── */
+  /* LOAD KARDS */
+
   useEffect(() => {
+
     if (!loggedIn) return;
+
     async function init() {
-      const { data: kardData, error } = await supabase
+
+      const { data: kardData } = await supabase
         .from("kard_summaries")
         .select("*")
         .order("group_id", { ascending: true });
-      console.log("Loaded kard summaries:", kardData, error);
-      if (!kardData) return;
-      const unique: Record<number, Kard> = {};
-      kardData.forEach((k: Kard) => { unique[k.group_id] = k; });
-      setKards(Object.values(unique).slice(0, 3));
+
+      if (kardData) {
+
+        const unique: Record<number, Kard> = {};
+
+        kardData.forEach((k: Kard) => {
+          unique[k.group_id] = k;
+        });
+
+        setKards(Object.values(unique).slice(0, 3));
+
+      }
+
+      setLoading(false);
+
+      startSummarizer();
+
     }
+
     init();
-    startSummarizer();
+
   }, [loggedIn]);
 
-  /* ── Realtime updates ── */
+  /* INTRO SCREEN TIMER */
+
   useEffect(() => {
+
     if (!loggedIn) return;
+
+    const timer = setTimeout(() => {
+
+      setShowIntro(false);
+
+    }, 7000); // 7 seconds
+
+    return () => clearTimeout(timer);
+
+  }, [loggedIn]);
+
+  /* KARD ROTATION */
+
+  useEffect(() => {
+
+    if (loading || showIntro) return;
+
+    const interval = setInterval(() => {
+
+      setPosIndex(prev => [
+        prev[2],
+        prev[0],
+        prev[1],
+      ]);
+
+    }, ROTATE_INTERVAL);
+
+    return () => clearInterval(interval);
+
+  }, [loading, showIntro]);
+
+  /* REALTIME KARD UPDATES */
+
+  useEffect(() => {
+
+    if (!loggedIn) return;
+
     const channel = supabase
       .channel("kard_updates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "kard_summaries" },
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "kard_summaries" },
         (payload) => {
+
           const updated = payload.new as Kard;
-          setKards((prev) => {
-            const filtered = prev.filter((k) => k.group_id !== updated.group_id);
+
+          setKards(prev => {
+
+            const filtered = prev.filter(
+              k => k.group_id !== updated.group_id
+            );
+
             return [...filtered, updated].slice(0, 3);
+
           });
+
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    return () => supabase.removeChannel(channel);
+
   }, [loggedIn]);
+
+  /* INTERACTION */
 
   const openKard = (kard: Kard) => setSelectedKard(kard);
   const closeKard = () => setSelectedKard(null);
-  const enterChat = () => { if (selectedKard) setChatGroup(selectedKard.group_id); };
+  const enterChat = () => {
+    if (selectedKard) setChatGroup(selectedKard.group_id);
+  };
 
-  if (!loggedIn) return <Auth onLogin={() => setLoggedIn(true)} />;
+  /* AUTH SCREEN */
 
-  if (chatGroup) {
-    return (
-      <Chat groupId={chatGroup} goBack={() => { setChatGroup(null); setSelectedKard(null); }} />
-    );
+  if (!loggedIn && !loading) {
+    return <Auth onLogin={() => setLoggedIn(true)} />;
   }
 
+  /* INTRO SCREEN */
+
+  if (showIntro) {
+
+    return (
+
+      <div className="intro-screen">
+
+        <h1 className="intro-title">
+          Welcome to Kochi's Kards
+        </h1>
+
+        <p className="intro-subtitle">
+          Anonymous group chats to meet new people and sharpen your social skills.
+        </p>
+
+      </div>
+
+    );
+
+  }
+
+  /* CHAT SCREEN */
+
+  if (chatGroup) {
+
+    return (
+      <Chat
+        groupId={chatGroup}
+        goBack={() => {
+          setChatGroup(null);
+          setSelectedKard(null);
+        }}
+      />
+    );
+
+  }
+
+  /* MAIN UI */
+
   return (
+
     <div className="app">
 
       {!selectedKard && (
+
         <div className="arc-scene">
 
-          <svg className="arc-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <svg className="arc-svg" viewBox="0 0 400 400">
             <ellipse
-              cx="200" cy="195"
-              rx="138" ry="122"
+              cx="200"
+              cy="195"
+              rx="138"
+              ry="122"
               fill="none"
               stroke="rgba(30,28,25,0.12)"
               strokeWidth="1.5"
@@ -116,26 +230,27 @@ function App() {
             />
           </svg>
 
-          {kards.length === 0 && (
-            <p className="loading-text">Loading summaries…</p>
-          )}
-
           {kards.map((kard, index) => {
-            const slot = POSITIONS[posIndex[index]];
+
+            const slot = POSITIONS[posIndex[index] ?? 0];
+
             return (
+
               <div
                 key={kard.group_id}
                 className="arc-kard"
                 style={{
                   left: `${slot.x}%`,
                   top: `${slot.y}%`,
-                  transform: `translate(-50%, -50%) rotate(${slot.tilt}deg)`,
+                  transform: `translate(-50%, -50%) rotate(${slot.tilt}deg)`
                 }}
                 onClick={() => openKard(kard)}
               >
-                <p>{kard.summary.substring(0, 60)}…</p>
+                <p>{kard.summary}</p>
               </div>
+
             );
+
           })}
 
           <div className="arc-title-wrap">
@@ -143,20 +258,35 @@ function App() {
           </div>
 
         </div>
+
       )}
 
       {selectedKard && (
+
         <div className="expanded-kard">
+
           <p className="summary">{selectedKard.summary}</p>
+
           <div className="buttons">
-            <button onClick={closeKard}>Back</button>
-            <button className="primary" onClick={enterChat}>Enter Chat</button>
+
+            <button onClick={closeKard}>
+              Back
+            </button>
+
+            <button className="primary" onClick={enterChat}>
+              Enter Chat
+            </button>
+
           </div>
+
         </div>
+
       )}
 
     </div>
+
   );
+
 }
 
 export default App;
