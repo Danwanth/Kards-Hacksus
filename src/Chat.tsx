@@ -17,13 +17,15 @@ export default function Chat({ groupId, goBack }: any) {
   const [text, setText] = useState("");
   const [denselText, setDenselText] = useState("");
 
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const username = localStorage.getItem("kards_username") || "anonymous";
 
-  // Autofocus input
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
@@ -83,6 +85,49 @@ export default function Chat({ groupId, goBack }: any) {
 
     return () => {
       supabase.removeChannel(channel);
+    };
+
+  }, [groupId]);
+
+  /*
+  ==========================
+  TYPING INDICATOR
+  ==========================
+  */
+
+  useEffect(() => {
+
+    const typingChannel = supabase
+      .channel("typing-channel")
+      .on(
+        "broadcast",
+        { event: "typing" },
+        ({ payload }) => {
+
+          if (payload.group_id !== groupId) return;
+          if (payload.user === username) return;
+
+          setTypingUsers(prev => {
+
+            if (prev.includes(payload.user)) return prev;
+            return [...prev, payload.user];
+
+          });
+
+          if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+          }
+
+          typingTimeoutRef.current = setTimeout(() => {
+            setTypingUsers([]);
+          }, 2000);
+
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(typingChannel);
     };
 
   }, [groupId]);
@@ -241,12 +286,39 @@ export default function Chat({ groupId, goBack }: any) {
 
       </div>
 
+      {/* Typing box above input */}
+      {typingUsers.length > 0 && (
+        <div className="typing-box">
+          <div className="typing-content">
+            {typingUsers.join(", ")} is typing
+            <span className="dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="chat-input">
 
         <input
           ref={inputRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+
+            setText(e.target.value);
+
+            supabase.channel("typing-channel").send({
+              type: "broadcast",
+              event: "typing",
+              payload: {
+                user: username,
+                group_id: groupId
+              }
+            });
+
+          }}
           onKeyDown={handleKeyDown}
           placeholder="Type message..."
         />
@@ -257,7 +329,6 @@ export default function Chat({ groupId, goBack }: any) {
 
       </div>
 
-      {/* AI Assistant */}
       <Densel
         text={denselText}
         messages={messages}
