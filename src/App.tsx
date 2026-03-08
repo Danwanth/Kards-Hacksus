@@ -51,24 +51,34 @@ function App() {
 
   }, []);
 
-  /* LOAD KARDS */
+  /* START AI SUMMARIZER IMMEDIATELY AFTER LOGIN */
 
   useEffect(() => {
 
     if (!loggedIn) return;
 
-    async function init() {
+    startSummarizer();
 
-      const { data: kardData } = await supabase
+  }, [loggedIn]);
+
+  /* LOAD INITIAL KARDS */
+
+  useEffect(() => {
+
+    if (!loggedIn) return;
+
+    async function loadKards() {
+
+      const { data } = await supabase
         .from("kard_summaries")
         .select("*")
         .order("group_id", { ascending: true });
 
-      if (kardData) {
+      if (data) {
 
         const unique: Record<number, Kard> = {};
 
-        kardData.forEach((k: Kard) => {
+        data.forEach((k: Kard) => {
           unique[k.group_id] = k;
         });
 
@@ -78,11 +88,9 @@ function App() {
 
       setLoading(false);
 
-      startSummarizer();
-
     }
 
-    init();
+    loadKards();
 
   }, [loggedIn]);
 
@@ -96,13 +104,13 @@ function App() {
 
       setShowIntro(false);
 
-    }, 7000); // 7 seconds
+    }, 4500);
 
     return () => clearTimeout(timer);
 
   }, [loggedIn]);
 
-  /* KARD ROTATION */
+  /* KARD ROTATION (UI ONLY) */
 
   useEffect(() => {
 
@@ -122,7 +130,7 @@ function App() {
 
   }, [loading, showIntro]);
 
-  /* REALTIME KARD UPDATES */
+  /* REALTIME SUMMARY UPDATES */
 
   useEffect(() => {
 
@@ -132,18 +140,39 @@ function App() {
       .channel("kard_updates")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "kard_summaries" },
+        {
+          event: "*",
+          schema: "public",
+          table: "kard_summaries"
+        },
         (payload) => {
 
           const updated = payload.new as Kard;
 
           setKards(prev => {
 
-            const filtered = prev.filter(
-              k => k.group_id !== updated.group_id
+            const index = prev.findIndex(
+              k => k.group_id === updated.group_id
             );
 
-            return [...filtered, updated].slice(0, 3);
+            if (index !== -1) {
+
+              const copy = [...prev];
+
+              copy[index] = {
+                ...copy[index],
+                summary: updated.summary
+              };
+
+              return copy;
+
+            }
+
+            if (prev.length < 3) {
+              return [...prev, updated];
+            }
+
+            return prev;
 
           });
 
@@ -158,18 +187,20 @@ function App() {
   /* INTERACTION */
 
   const openKard = (kard: Kard) => setSelectedKard(kard);
+
   const closeKard = () => setSelectedKard(null);
+
   const enterChat = () => {
     if (selectedKard) setChatGroup(selectedKard.group_id);
   };
 
-  /* AUTH SCREEN */
+  /* AUTH */
 
   if (!loggedIn && !loading) {
     return <Auth onLogin={() => setLoggedIn(true)} />;
   }
 
-  /* INTRO SCREEN */
+  /* INTRO */
 
   if (showIntro) {
 
@@ -191,7 +222,7 @@ function App() {
 
   }
 
-  /* CHAT SCREEN */
+  /* CHAT */
 
   if (chatGroup) {
 
