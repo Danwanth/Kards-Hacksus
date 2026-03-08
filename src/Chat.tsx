@@ -19,7 +19,7 @@ export default function Chat({ groupId, goBack }: any) {
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const username = localStorage.getItem("kards_username") || "anonymous";
 
