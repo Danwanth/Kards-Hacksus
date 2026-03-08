@@ -6,37 +6,42 @@
   --accent: #5b8f5e;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
+/* Reset + Box sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
+/* Base page settings */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* Body styling */
 body {
   font-family: 'DM Sans', sans-serif;
   font-weight: 300;
-  margin: 0;
   background-color: var(--bg);
   color: var(--text);
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  background-image:
-    radial-gradient(circle, rgba(91,143,94,0.18) 1.5px, transparent 1.5px);
+  /* dotted background pattern */
+  background-image: radial-gradient(
+    circle,
+    rgba(91, 143, 94, 0.18) 1.5px,
+    transparent 1.5px
+  );
   background-size: 28px 28px;
 }
 
+/* Heading styling */
 h1 {
   font-family: 'Playfair Display', serif;
   font-weight: 700;
   text-align: center;
   letter-spacing: -0.02em;
   color: var(--text);
-}
-html, body {
-  overflow-x:hidden;
-}
-html,body{
-  height:100%;
-  overflow-x:hidden;
-}
-html, body{
-height:100%;
-overflow:hidden;
 }
