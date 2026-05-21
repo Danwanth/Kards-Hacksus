@@ -188,30 +188,6 @@ Implemented here:
 
 ---
 
-# 📸 Screenshots
-
-*Add screenshots or demo GIFs here*
-
-Example:
-
-```md
-![Home Screen](./screenshots/home.png)
-![Chat Screen](./screenshots/chat.png)
-```
-
----
-
-# 🧪 Known Issues
-
-Current TypeScript build warning:
-
-```bash
-src/pages/Chat.tsx(5,1): error TS6133:
-'Message' is declared but its value is never read.
-```
-
----
-
 
 Repository:
 [Kards-Hacksus GitHub Repo](https://github.com/Danwanth/Kards-Hacksus?utm_source=chatgpt.com)
