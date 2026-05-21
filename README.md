@@ -1,73 +1,217 @@
-# React + TypeScript + Vite
+# KARDS — AI-Powered Conversation Summaries
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+KARDS is an experimental real-time chat experience that transforms active group conversations into beautiful interactive “Kards.”
+Each Kard is an AI-generated summary of a live discussion, helping users instantly understand what a group is talking about before joining the conversation.
 
-Currently, two official plugins are available:
+Built with React, TypeScript, Supabase, and OpenRouter AI.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## ✨ Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* 🧠 AI-generated conversation summaries
+* 💬 Real-time group chat updates
+* 🎴 Interactive animated Kard UI
+* 🤖 “Densel” AI assistant personality
+* ⚡ Live syncing using Supabase Realtime
+* 📱 Mobile-friendly aesthetic interface
+* 🔄 Automatic background summarization engine
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🖼️ Concept
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Instead of showing endless chat lists, KARDS surfaces discussions as rotating summary cards.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Users can:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. View summarized conversations
+2. Open a Kard to understand the topic
+3. Enter the live chat instantly
+
+The app continuously monitors conversations and updates summaries automatically using AI. 
+
+---
+
+## 🧠 AI System
+
+KARDS uses an AI summarizer powered through OpenRouter and GPT-4o Mini.
+The summarizer:
+
+* Cleans spam and duplicate messages
+* Understands the overall discussion topic
+* Produces short “headline-style” summaries
+* Suggests natural ways to join conversations
+
+Implemented in the AI engine here: 
+
+---
+
+# 🛠️ Tech Stack
+
+* React
+* TypeScript
+* Vite
+* Supabase
+* OpenRouter API
+* Tailwind Utilities
+* Custom CSS animations
+
+---
+
+# 📂 Project Structure
+
+```bash
+src/
+│
+├── App.tsx                 # Main Kard interface
+├── Chat.tsx                # Chat experience
+├── Auth.tsx                # Authentication
+├── Densel.tsx              # AI assistant character
+│
+├── ai.ts                   # AI summarization logic
+├── aiSummarizer.ts         # Background summarizer
+├── summarizerRunner.ts     # Periodic summarizer loop
+│
+├── supabase.ts             # Supabase client
+│
+├── App.css
+├── Chat.css
+├── Densel.css
+└── index.css
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+# ⚙️ Setup
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 1. Clone the repository
+
+```bash
+git clone https://github.com/Danwanth/Kards-Hacksus.git
+cd Kards-Hacksus
 ```
+
+---
+
+## 2. Install dependencies
+
+```bash
+npm install
+```
+
+---
+
+## 3. Configure environment variables
+
+Create a `.env` file:
+
+```env
+VITE_OPENROUTER_KEY=your_openrouter_api_key
+```
+
+Supabase is initialized inside:
+
+```ts
+src/supabase.ts
+```
+
+
+
+---
+
+## 4. Run the development server
+
+```bash
+npm run dev
+```
+
+---
+
+# 🔄 How Real-Time Summaries Work
+
+The summarizer engine:
+
+1. Fetches active group conversations
+2. Retrieves the latest messages
+3. Generates AI summaries
+4. Stores summaries in Supabase
+5. Updates the UI in real time
+
+The summarizer loop runs every 20 seconds.
+
+---
+
+# 🎨 Design Philosophy
+
+KARDS focuses on:
+
+* Minimal cognitive overload
+* Calm ambient UI
+* AI-assisted social navigation
+* Human-centered interaction design
+
+The interface combines:
+
+* Soft gradients
+* Floating motion
+* Editorial typography
+* Glassmorphism-inspired cards
+
+Styled primarily through custom CSS animations and layouts.
+
+---
+
+# 🤖 Meet Densel
+
+Densel is the conversational AI assistant inside KARDS.
+
+Capabilities include:
+
+* Understanding group discussions
+* Helping users join conversations
+* Reacting to chat activity
+* Displaying contextual interaction states
+
+Implemented here:
+
+---
+
+# 🚀 Future Ideas
+
+* Voice-based conversations
+* Semantic topic clustering
+* Personalized Kard recommendations
+* AI-generated conversation previews
+* Friend presence indicators
+* Multi-room intelligence
+
+---
+
+# 📸 Screenshots
+
+*Add screenshots or demo GIFs here*
+
+Example:
+
+```md
+![Home Screen](./screenshots/home.png)
+![Chat Screen](./screenshots/chat.png)
+```
+
+---
+
+# 🧪 Known Issues
+
+Current TypeScript build warning:
+
+```bash
+src/pages/Chat.tsx(5,1): error TS6133:
+'Message' is declared but its value is never read.
+```
+
+---
+
+
+Repository:
+[Kards-Hacksus GitHub Repo](https://github.com/Danwanth/Kards-Hacksus?utm_source=chatgpt.com)
